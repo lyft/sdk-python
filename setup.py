@@ -31,6 +31,14 @@ DIST_DIR = "dist"
 MATURIN_REQ = "maturin>=1.0,<2.0"
 
 
+def _output_dir(cmd: object) -> str:
+    """Directory for artifacts; honors setuptools ``--dist-dir`` / ``-d`` when set."""
+    dist_dir = getattr(cmd, "dist_dir", None)
+    if dist_dir:
+        return str(dist_dir)
+    return DIST_DIR
+
+
 def _have_maturin() -> bool:
     exe = shutil.which("maturin")
     if exe:
@@ -77,19 +85,21 @@ def _run_maturin(args: list[str]) -> None:
 
 class sdist(_sdist):
     def run(self) -> None:
-        self.mkpath(DIST_DIR)
-        _run_maturin(["sdist", "-o", DIST_DIR])
+        out = _output_dir(self)
+        self.mkpath(out)
+        _run_maturin(["sdist", "-o", out])
 
 
 class bdist_wheel(_bdist_wheel):
     def run(self) -> None:
-        self.mkpath(DIST_DIR)
+        out = _output_dir(self)
+        self.mkpath(out)
         _run_maturin(
             [
                 "build",
                 "--release",
                 "-o",
-                DIST_DIR,
+                out,
             ]
         )
 
